@@ -4,7 +4,7 @@ package com.org.pk.spotify.controller;
 import com.org.pk.spotify.context.RequestContext;
 import com.org.pk.spotify.custom.exceptions.CustomException;
 import com.org.pk.spotify.handler.SpotifyHandler;
-import com.org.pk.spotify.helpers.controllerhelpers.ControllerHelper;
+import com.org.pk.spotify.controller.controllerhelpers.ControllerHelper;
 import org.apache.hc.core5.http.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 
 import java.io.IOException;
+import java.util.List;
 
 @RestController
 @RequestMapping("/spotify")
@@ -33,13 +34,16 @@ public class SpotifyController {
         return ResponseEntity.status(HttpStatus.OK).body(spotifyHandler.getTop10Albums());
     }
 
-    @GetMapping("/getTop10")
+        @GetMapping("/getTop10")
     public ResponseEntity<?> getByArtist(@RequestHeader HttpHeaders headers)  {
+        ResponseEntity<?> responseEntity = null;
         try {
             RequestContext requestContext = controllerHelper.extractHeaders(headers);
-            return ResponseEntity.status(HttpStatus.OK).body(spotifyHandler.getTopTracksByArtist(requestContext));
+            List<String> topTracksList = spotifyHandler.getTopTracksByArtist(requestContext);
+            responseEntity = controllerHelper.respond(topTracksList, HttpStatus.OK);
         }catch (Throwable ex){
             return controllerHelper.respond(CustomException.wrap(ex));
         }
+        return responseEntity;
     }
 }

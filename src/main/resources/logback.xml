@@ -12,6 +12,10 @@
                 <logLevel>
                     <fieldName>severity</fieldName>
                 </logLevel>
+                <mdc>
+                    <includeMdcKeyName>traceId</includeMdcKeyName>
+                    <includeMdcKeyName>spanId</includeMdcKeyName>
+                </mdc>
                 <nestedField>
                     <fieldName>attributes</fieldName>
                     <providers>
@@ -22,6 +26,13 @@
                             <fieldName>thread</fieldName>
                         </threadName>
                         <stackTrace />
+                        <mdc>
+                            <includeMdcKeyName>trigger</includeMdcKeyName>
+                            <includeMdcKeyName>artistName</includeMdcKeyName>
+                            <includeMdcKeyName>token</includeMdcKeyName>
+                            <includeMdcKeyName>requestId</includeMdcKeyName>
+                            <includeMdcKeyName>rootSpanId</includeMdcKeyName>
+                        </mdc>
                         <logstashMarkers />
                     </providers>
                 </nestedField>
