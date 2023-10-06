@@ -1,8 +1,10 @@
 package com.org.pk.spotify.handler;
 
 import com.neovisionaries.i18n.CountryCode;
+import com.org.pk.spotify.response.codes.AbstractDomCode;
+import com.org.pk.spotify.custom.exceptions.CustomException;
+import com.org.pk.spotify.context.RequestContext;
 import com.org.pk.spotify.custom.logging.Markers;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,7 +13,6 @@ import se.michaelthelin.spotify.SpotifyApi;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.specification.AlbumSimplified;
 import se.michaelthelin.spotify.model_objects.specification.Artist;
-import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
 import se.michaelthelin.spotify.model_objects.specification.Track;
 import se.michaelthelin.spotify.requests.data.artists.GetArtistsTopTracksRequest;
 import se.michaelthelin.spotify.requests.data.search.simplified.SearchAlbumsRequest;
@@ -28,14 +29,13 @@ import java.util.List;
 public class SpotifyHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(SpotifyHandler.class);
-    private final SpotifyApi spotifyApi;
 
-    public SpotifyHandler() {
-        this.spotifyApi = new SpotifyApi.Builder()
-                .setAccessToken("YOUR_ACCESS_TOKEN")
-                .build();    }
+    public SpotifyHandler() {}
 
     public List<AlbumSimplified> getTop10Albums() throws IOException, SpotifyWebApiException, ParseException {
+        SpotifyApi spotifyApi = new SpotifyApi.Builder()
+                .setAccessToken("")
+                .build();
         try {
             SearchAlbumsRequest request = spotifyApi.searchAlbums("tag:new").build();
             AlbumSimplified[] albums = request.execute().getItems();
@@ -48,12 +48,16 @@ public class SpotifyHandler {
         }
     }
 
-    public List<String> getTopTracksByArtist(String artistName) {
+    public List<String> getTopTracksByArtist(RequestContext requestContext) {
         List<String> topTracksList = new ArrayList<>();
+
+        SpotifyApi spotifyApi = new SpotifyApi.Builder()
+                .setAccessToken(requestContext.getToken())
+                .build();
 
         try {
             // Perform an artist search
-            SearchArtistsRequest searchArtistsRequest = spotifyApi.searchArtists(artistName).build();
+            SearchArtistsRequest searchArtistsRequest = spotifyApi.searchArtists(requestContext.getArtistName()).build();
             Artist[] artists = searchArtistsRequest.execute().getItems();
 
             if (artists.length > 0) {
@@ -72,12 +76,13 @@ public class SpotifyHandler {
                     topTracksList.add(track.getName());
                 }
             } else {
-                System.out.println("Artist not found.");
+                CustomException customException = new CustomException(AbstractDomCode.ARTIST_NOT_FOUND);
+                throw customException;
             }
-        } catch (IOException | SpotifyWebApiException e) {
-            e.printStackTrace();
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
+        } catch (Exception exception) {
+            CustomException customException = CustomException.wrap(exception, AbstractDomCode.ARTIST_NOT_FOUND);
+            logger.info(new Markers().bookmark("ALBUMS").info(customException).collate(), StringUtils.EMPTY);
+            throw customException;
         }
         logger.info(new Markers().bookmark("ALBUMS").info(topTracksList).collate(), StringUtils.EMPTY);
         return topTracksList;
